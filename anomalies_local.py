@@ -26,7 +26,16 @@ column = column.to_numpy()
 get_bands = lambda data : (np.mean(data) + 3*np.std(data),np.mean(data) - 3*np.std(data))
 #get_bands = lambda data : (np.mean(data) + np.nanquantile(data,0.99),np.mean(data) - np.nanquantile(data,0.99))
 
-bands = [get_bands(column[range(0 if i - k < 0 else i-k ,i + k if i + k < N else N)]) for i in range(0,N)]
+def getBandsWorker(idx):
+    global k, N, get_bands
+    return get_bands(column[0 if idx - k < 0 else idx - k : idx + k if idx + k < N else N])
+
+from multiprocessing import Pool
+
+with Pool(processes=8) as p:
+    bands = p.map(getBandsWorker, range(0,N))`
+
+#bands = [get_bands(column[range(0 if i - k < 0 else i-k ,i + k if i + k < N else N)]) for i in range(0,N)]
 upper, lower = zip(*bands)
 
 # compute local outliers 
